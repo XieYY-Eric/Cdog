@@ -20,7 +20,7 @@ TEST_SIZE = 0.5
 BATCH_SIZE = 64
 NO_EPOCHS = 20
 SAMPLE_SIZE = 100
-
+KERAS_SAVE_MODEL = 'my_model.h5'
 
 def label_pet_image_one_hot_encoder(img):
     """
@@ -73,8 +73,8 @@ def show_images(data, isTest=False):
 
 def plot_accuracy_and_loss(train_model):
     hist = train_model.history
-    acc = hist['acc']
-    val_acc = hist['val_acc']
+    acc = hist['accuracy']
+    val_acc = hist['val_accuracy']
     loss = hist['loss']
     val_loss = hist['val_loss']
     epochs = range(len(acc))
@@ -92,7 +92,6 @@ def plot_accuracy_and_loss(train_model):
 
 def main():
     
-
     if not os.path.exists(DATA_DIR):
         logging.error(f"{DATA_DIR} not found")
         exit()
@@ -111,8 +110,9 @@ def main():
 
             #convert training data to numpy array X and Y
             X, Y = zip(*train)
+            X = [np.array(x).reshape(IMG_SIZE,IMG_SIZE,3) for x in X]
             X = np.array(X)
-            X = [x.reshape(-1,IMG_SIZE,IMG_SIZE,3) for x in X]
+
             Y = np.array(Y)
 
             #use ResNet-50
@@ -125,7 +125,7 @@ def main():
 
             #prepare data for training
             X_train, X_val, y_train, y_val = train_test_split(X, Y, test_size=TEST_SIZE)
-            print(X_train.shape, y_train.shape)
+
             #Train with validation
             train_model = model.fit(X_train, y_train,
                   batch_size=BATCH_SIZE,
@@ -140,30 +140,33 @@ def main():
             print('Validation accuracy:', score[1])
 
             #get the predictions for the test data
-            predicted_classes = model.predict_classes(X_val)
+            predicted_classes =  np.argmax(model.predict(X_val), axis=1)
             #get the indices to be plotted
             y_true = np.argmax(y_val,axis=1)
             correct = np.nonzero(predicted_classes==y_true)[0]
             incorrect = np.nonzero(predicted_classes!=y_true)[0]
             target_names = ["Class {}:".format(i) for i in range(NUM_CLASSES)]
             print(classification_report(y_true, predicted_classes, target_names=target_names))
-        
+
             f, ax = plt.subplots(5,5, figsize=(10,10))
             for i,data in enumerate(test[:25]):
                 img_num = data[1]
                 img_data = data[0]
                 orig = img_data
                 data = img_data.reshape(-1,IMG_SIZE,IMG_SIZE,3)
-                model_out = model.predict([data])[0]
-                
+                model_out = model.predict(data)[0]
+
                 if np.argmax(model_out) == 1: 
                     str_predicted='Dog'
                 else: 
                     str_predicted='Cat'
+
                 ax[i//5, i%5].imshow(orig)
                 ax[i//5, i%5].axis('off')
-                ax[i//5, i%5].set_title("Predicted:{}".format(str_predicted))    
-            plt.show()
+                ax[i//5, i%5].set_title("Pred:{}".format(str_predicted)) 
+            
+            model.save(os.path.join(DATA_DIR,KERAS_SAVE_MODEL))
+            
         else:
             logging.error("unable to find the zip files")
             exit()
