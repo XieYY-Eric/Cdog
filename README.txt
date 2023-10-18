@@ -10,3 +10,9 @@ not my own
     main.py uses the latest trained model directly without training
     network.py trains the model and save the result, adjust the setting urself
     cmodel.ipynb same thing, more easier to use for testing purpose
+
+./backend
+    contains python file run on flask as backend, support image classification and return the result as json data to frontend
+
+./frontend
+    contains js, css  files, implemented using vue   
