@@ -41,6 +41,7 @@ def main():
         img_data = data[0]
         orig = img_data
         data = img_data.reshape(-1,255,255,3)
+        print(data.shape)
         model_out = model.predict(data)[0]
 
         if np.argmax(model_out) == 1: 
@@ -53,6 +54,23 @@ def main():
         ax[i//5, i%5].set_title("Pred:{}".format(str_predicted)) 
 
     plt.show()
+
+    ##upload your own image
+    while True:
+        filename = input("Please enter your own image file name path:")
+        filename = os.path.join(DATA_DIR,filename)
+        if not os.path.exists(filename):
+            logging.error("Path doesn't exist")
+        else:
+            img_read = cv2.imread(filename,cv2.IMREAD_COLOR)
+            img_read = cv2.resize(img_read, (255,255))
+            feed = img_read.reshape(-1,255,255,3)
+
+            result = model.predict(feed)
+            
+            plt.imshow(img_read)
+            plt.title(f"predict: {result}")
+            plt.show()
 
     
 
